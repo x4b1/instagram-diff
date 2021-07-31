@@ -3,6 +3,7 @@ package server
 import (
 	_ "embed"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -45,5 +46,15 @@ func handler(d *instagram.Instadiff) {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))
 		}
+	})
+	http.HandleFunc("/profile-photo", func(w http.ResponseWriter, r *http.Request) {
+		response, err := http.Get(r.URL.Query().Get("url"))
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+		defer response.Body.Close()
+
+		io.Copy(w, response.Body)
 	})
 }

@@ -3,6 +3,7 @@ package instagram
 import (
 	"context"
 	"errors"
+	"net/url"
 
 	"github.com/kr/pretty"
 
@@ -70,7 +71,7 @@ func getAll(i *goinsta.Users) (map[int64]User, error) {
 				ID:         u.ID,
 				Username:   u.Username,
 				Fullname:   u.FullName,
-				ProfilePic: u.ProfilePicURL,
+				ProfilePic: url.QueryEscape(u.ProfilePicURL),
 			}
 		}
 	}
