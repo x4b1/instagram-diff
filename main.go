@@ -6,14 +6,14 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"syscall"
 
-	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/term"
 
 	"github.com/xabi93/instagram-diff/instagram"
+	"github.com/xabi93/instagram-diff/log"
 	"github.com/xabi93/instagram-diff/server"
 )
 
@@ -31,12 +31,14 @@ type Conf struct {
 
 type App struct {
 	cfg Conf
+	l   log.Logger
 }
 
 func (a *App) Init() {
+	a.l = log.NewLogger()
 	home, err := os.UserHomeDir()
 	if err != nil {
-		log.Fatal(err)
+		a.l.Fatal(err.Error())
 	}
 	flag.StringVar(&a.cfg.sessionFile, "sessionFile", fmt.Sprintf("%s/.instadiff", home), "Session file")
 
@@ -48,11 +50,11 @@ func (a *App) Init() {
 func (a App) Run() {
 	i, err := a.login()
 	if err != nil {
-		log.Fatal(err)
+		a.l.Fatal(err.Error())
 	}
 
 	if err := server.Serve(a.cfg.port, i); err != nil {
-		log.Fatal(err)
+		a.l.Fatal(err.Error())
 	}
 }
 
@@ -79,13 +81,13 @@ func DownloadFile(filepath string, url string) error {
 var cli *instagram.Instagram
 
 func (a App) login() (*instagram.Instadiff, error) {
-	i, err := a.restore()
+	var err error
+	cli, err = a.restore()
 	if err != nil {
 		return nil, err
 	}
-	cli = i
-	if i != nil {
-		return instagram.New(i), nil
+	if cli != nil {
+		return instagram.New(cli), nil
 	}
 
 	user, pass, err := a.askUserPass()
@@ -97,7 +99,7 @@ func (a App) login() (*instagram.Instadiff, error) {
 		return nil, err
 	}
 
-	return instagram.New(i), nil
+	return instagram.New(cli), nil
 }
 
 func (a App) restore() (*instagram.Instagram, error) {
@@ -105,7 +107,7 @@ func (a App) restore() (*instagram.Instagram, error) {
 		return nil, nil
 	}
 
-	fmt.Printf("Restoring session from %s\n", a.cfg.sessionFile)
+	a.l.Info(fmt.Sprintf("Restoring session from %s", a.cfg.sessionFile))
 
 	i, err := instagram.RestoreSession(a.cfg.sessionFile)
 	if err != nil {
@@ -116,8 +118,8 @@ func (a App) restore() (*instagram.Instagram, error) {
 	if err == nil {
 		return i, nil
 	}
+
 	if errors.As(err, &instagram.AuthError{}) {
-		fmt.Println("Session outdated")
 		os.Remove(a.cfg.sessionFile)
 		return nil, nil
 	}
@@ -135,7 +137,7 @@ func (App) askUserPass() (string, string, error) {
 	}
 
 	fmt.Print("Enter Password: ")
-	bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
+	bytePassword, err := term.ReadPassword(int(syscall.Stdin))
 	if err != nil {
 		return "", "", err
 	}

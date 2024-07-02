@@ -28,6 +28,7 @@ func handler(d *instagram.Instadiff) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	type table struct {
 		Title string
 		Users []instagram.User
