@@ -39,7 +39,7 @@ func Login(user, pass, exportPath string) (*Instagram, error) {
 type Instagram struct{ *goinsta.Instagram }
 
 func (i Instagram) Ping() error {
-	err := i.Instagram.Account.Sync()
+	err := i.Account.Sync()
 	var errN *goinsta.ErrorN
 	if !errors.As(err, &errN) {
 		return err
@@ -52,11 +52,11 @@ func (i Instagram) Ping() error {
 }
 
 func (i Instagram) Followers(_ context.Context) (map[int64]User, error) {
-	return getAll(i.Instagram.Account.Followers(""))
+	return getAll(i.Account.Followers(""))
 }
 
 func (i Instagram) Following(_ context.Context) (map[int64]User, error) {
-	return getAll(i.Instagram.Account.Following("", goinsta.DefaultOrder))
+	return getAll(i.Account.Following("", goinsta.LatestOrder))
 }
 
 func getAll(i *goinsta.Users) (map[int64]User, error) {
