@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"text/template"
 
-	"github.com/xabi93/instagram-diff/instagram"
+	"github.com/x4b1/instagram-diff/instagram"
 )
 
 //go:embed index.tmpl
